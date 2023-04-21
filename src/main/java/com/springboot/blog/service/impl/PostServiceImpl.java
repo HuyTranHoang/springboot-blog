@@ -3,8 +3,12 @@ package com.springboot.blog.service.impl;
 import com.springboot.blog.exception.ResourceNotFoundException;
 import com.springboot.blog.model.Post;
 import com.springboot.blog.payload.PostDto;
+import com.springboot.blog.payload.PostReponse;
 import com.springboot.blog.repository.PostRepository;
 import com.springboot.blog.service.PostService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,9 +36,24 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostDto> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
-        return posts.stream().map(post -> mapToDTO(post)).collect(Collectors.toList());
+    public PostReponse getAllPosts(int pageNo, int pageSize) {
+
+//        Create Pageable instance
+        Pageable pageable = PageRequest.of(pageNo,pageSize);
+        Page<Post> posts = postRepository.findAll(pageable);
+//        Get content for page object
+        List<Post> listOfPosts = posts.getContent();
+        List<PostDto> content = listOfPosts.stream().map(post -> mapToDTO(post)).collect(Collectors.toList());
+
+        PostReponse postReponse = new PostReponse();
+        postReponse.setContent(content);
+        postReponse.setPageNo(posts.getNumber());
+        postReponse.setPageSize(posts.getSize());
+        postReponse.setTotalElements(posts.getTotalElements());
+        postReponse.setTotalPages(posts.getTotalPages());
+        postReponse.setLast(posts.isLast());
+
+        return postReponse;
     }
 
     @Override
